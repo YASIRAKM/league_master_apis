@@ -101,9 +101,13 @@ func main() {
 	admin.POST("/players/:id/ban", adminHandler.BanPlayer)
 
 	// Start Server
+	// Start Server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = ":8080"
+	}
+	if len(port) > 0 && port[0] != ':' {
+		port = ":" + port
 	}
 	e.Logger.Fatal(e.Start(port))
 }
