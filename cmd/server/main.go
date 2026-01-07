@@ -56,6 +56,7 @@ func main() {
 	publicHandler := handlers.NewPublicHandler()
 	captainHandler := handlers.NewCaptainHandler()
 	adminHandler := handlers.NewAdminHandler()
+	notificationHandler := handlers.NewNotificationHandler()
 
 	// Routes
 	v1 := e.Group("/api/v1")
@@ -87,13 +88,34 @@ func main() {
 	mobile.DELETE("/my-team/players/:id", captainHandler.RemovePlayer)
 	mobile.POST("/matches/:id/events", captainHandler.AddMatchEvent)
 
+	// Mobile Notification Routes
+	mobile.GET("/notifications", notificationHandler.GetMyNotifications)
+	mobile.POST("/notifications/:id/read", notificationHandler.MarkNotificationRead)
+
 	// Admin Routes (Protected: Admin Role)
 	admin := v1.Group("/admin")
 	admin.Use(middleware.AuthMiddleware)
 	admin.Use(middleware.AdminOnly)
 
+	// Admin User CRUD
+	admin.GET("/users", adminHandler.GetAllUsers)
+	admin.GET("/users/:id", adminHandler.GetUser)
+	admin.PUT("/users/:id", adminHandler.UpdateUser)
+	admin.DELETE("/users/:id", adminHandler.DeleteUser)
+
+	// Admin Team CRUD
+	admin.GET("/teams", adminHandler.GetAllTeams)
+	admin.POST("/teams", adminHandler.CreateTeam)
+	admin.PUT("/teams/:id", adminHandler.UpdateTeam)
+	admin.DELETE("/teams/:id", adminHandler.DeleteTeam)
+
+	// Admin Tournament Extensions
 	admin.POST("/tournaments", adminHandler.CreateTournament)
-	admin.POST("/tournaments/:id/teams", adminHandler.AddTeamToTournament) // New Route
+	admin.PUT("/tournaments/:id", adminHandler.UpdateTournament)
+	admin.DELETE("/tournaments/:id", adminHandler.DeleteTournament)
+	admin.POST("/tournaments/:id/teams", adminHandler.AddTeamToTournament)
+	admin.DELETE("/tournaments/:id/teams/:team_id", adminHandler.RemoveTeamFromTournament)
+
 	admin.POST("/tournaments/:id/generate", adminHandler.GenerateBracket)
 	admin.POST("/matches/:id/resolve", adminHandler.ResolveMatch)
 	admin.GET("/dashboard/stats", adminHandler.GetDashboardStats)
