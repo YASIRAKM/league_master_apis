@@ -122,16 +122,50 @@ func (h *CaptainHandler) RemovePlayer(c echo.Context) error {
 }
 
 // POST /matches/:id/events
+// POST /matches/:id/events
 func (h *CaptainHandler) AddMatchEvent(c echo.Context) error {
-	// Logic to add goal/card
-	// TODO: Verify captain's team is playing in this match?
 	matchID, _ := strconv.Atoi(c.Param("id"))
+	userID := getUserID(c)
+
+	// Get Captain's Team
+	var user models.User
+	if err := database.GetDB().First(&user, userID).Error; err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "User not found"})
+	}
+	if user.TeamID == nil {
+		return c.JSON(http.StatusForbidden, echo.Map{"error": "No team assigned"})
+	}
+	captainTeamID := *user.TeamID
+
+	// Verify Match exists and Captain's Team is playing
+	var match models.Match
+	if err := database.GetDB().First(&match, matchID).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Match not found"})
+	}
+
+	if (match.TeamAID == nil || *match.TeamAID != captainTeamID) && (match.TeamBID == nil || *match.TeamBID != captainTeamID) {
+		return c.JSON(http.StatusForbidden, echo.Map{"error": "Your team is not participating in this match"})
+	}
 
 	var event models.MatchEvent
 	if err := c.Bind(&event); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid event data"})
 	}
 	event.MatchID = uint(matchID)
+
+	// Validate Player belongs to one of the teams in the match
+	var player models.Player
+	if err := database.GetDB().First(&player, event.PlayerID).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Player not found"})
+	}
+
+	// Check if player's team is in the match
+	isTeamA := match.TeamAID != nil && player.TeamID == *match.TeamAID
+	isTeamB := match.TeamBID != nil && player.TeamID == *match.TeamBID
+
+	if !isTeamA && !isTeamB {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Player does not belong to any team in this match"})
+	}
 
 	if err := database.GetDB().Create(&event).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create event"})

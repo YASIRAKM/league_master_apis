@@ -31,11 +31,25 @@ type Player struct {
 	TeamID       uint      `gorm:"not null;index" json:"team_id" form:"team_id"`
 	Name         string    `gorm:"not null" json:"name" form:"name"`
 	JerseyNumber int       `json:"jersey_number" form:"jersey_number"`
+	Position     string    `json:"position" form:"position"`
+	Age          int       `json:"age" form:"age"`
+	ImageURL     string    `json:"image_url" form:"image_url"`
+	Role         string    `json:"role" form:"role"` // Optional, or redundant with Position? Keeping as requested.
 	GoalsScored  int       `gorm:"default:0" json:"goals_scored" form:"goals_scored"`
 	RedCards     int       `gorm:"default:0" json:"red_cards" form:"red_cards"`
 	IsBanned     bool      `gorm:"default:false" json:"is_banned" form:"is_banned"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type Staff struct {
+	ID        uint      `gorm:"primaryKey" json:"id" form:"id"`
+	TeamID    uint      `gorm:"not null;index" json:"team_id" form:"team_id"`
+	Name      string    `gorm:"not null" json:"name" form:"name"`
+	Role      string    `gorm:"not null" json:"role" form:"role"` // e.g. Coach, Manager
+	Age       int       `json:"age" form:"age"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Tournament struct {

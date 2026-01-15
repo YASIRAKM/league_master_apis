@@ -46,17 +46,11 @@ func (h *PublicHandler) GetStandings(c echo.Context) error {
 }
 
 // GET /tournaments/:id/teams
+// GET /tournaments/:id/teams
 func (h *PublicHandler) GetTournamentTeams(c echo.Context) error {
-	// This might require a join if teams are not directly linked to tournament in a simple way in the model provided,
-	// but usually we can find teams that have matches in this tournament or if there's a registration table.
-	// Based on the models, there isn't a direct "TournamentTeams" link explicit in the structs other than Matches.
-	// HOWEVER, usually there's a registration or we assume all teams in the system are available,
-	// OR we query matches.
-	// Let's assume for now we list all teams, or if the user implied a relation.
-	// The prompt says "List all teams participating".
-	// The current models don't have a specific join table for Tournament<->Team active registration,
-	// but Standings are a good proxy for participation.
 	id, _ := strconv.Atoi(c.Param("id"))
+
+	// Use Standings as the source of truth for registered teams in a tournament
 	var standings []models.Standing
 	if err := database.GetDB().Where("tournament_id = ?", id).Preload("Team").Find(&standings).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to fetch participating teams"})

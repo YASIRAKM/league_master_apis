@@ -372,3 +372,152 @@ func (h *AdminHandler) RemoveTeamFromTournament(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "Team removed from tournament"})
 }
+
+// Player CRUD (Admin)
+
+// GET /admin/players
+func (h *AdminHandler) GetAllPlayers(c echo.Context) error {
+	var players []models.Player
+	if err := database.GetDB().Find(&players).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to fetch players"})
+	}
+	return c.JSON(http.StatusOK, players)
+}
+
+// POST /admin/players
+func (h *AdminHandler) CreatePlayer(c echo.Context) error {
+	var player models.Player
+	if err := c.Bind(&player); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+	if err := database.GetDB().Create(&player).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create player"})
+	}
+	return c.JSON(http.StatusCreated, player)
+}
+
+// GET /admin/players/:id
+func (h *AdminHandler) GetPlayer(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var player models.Player
+	if err := database.GetDB().First(&player, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Player not found"})
+	}
+	return c.JSON(http.StatusOK, player)
+}
+
+// PUT /admin/players/:id
+func (h *AdminHandler) UpdatePlayer(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var player models.Player
+	if err := database.GetDB().First(&player, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Player not found"})
+	}
+
+	if err := c.Bind(&player); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+
+	database.GetDB().Save(&player)
+	return c.JSON(http.StatusOK, player)
+}
+
+// DELETE /admin/players/:id
+func (h *AdminHandler) DeletePlayer(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := database.GetDB().Delete(&models.Player{}, id).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to delete player"})
+	}
+	return c.JSON(http.StatusOK, echo.Map{"message": "Player deleted"})
+}
+
+// Staff CRUD
+
+// GET /admin/staff
+func (h *AdminHandler) GetAllStaff(c echo.Context) error {
+	var staff []models.Staff
+	if err := database.GetDB().Find(&staff).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to fetch staff"})
+	}
+	return c.JSON(http.StatusOK, staff)
+}
+
+// POST /admin/staff
+func (h *AdminHandler) CreateStaff(c echo.Context) error {
+	var staff models.Staff
+	if err := c.Bind(&staff); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+	if err := database.GetDB().Create(&staff).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create staff"})
+	}
+	return c.JSON(http.StatusCreated, staff)
+}
+
+// GET /admin/staff/:id
+func (h *AdminHandler) GetStaff(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var staff models.Staff
+	if err := database.GetDB().First(&staff, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Staff not found"})
+	}
+	return c.JSON(http.StatusOK, staff)
+}
+
+// PUT /admin/staff/:id
+func (h *AdminHandler) UpdateStaff(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var staff models.Staff
+	if err := database.GetDB().First(&staff, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "Staff not found"})
+	}
+	if err := c.Bind(&staff); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+	database.GetDB().Save(&staff)
+	return c.JSON(http.StatusOK, staff)
+}
+
+// DELETE /admin/staff/:id
+func (h *AdminHandler) DeleteStaff(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := database.GetDB().Delete(&models.Staff{}, id).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to delete staff"})
+	}
+	return c.JSON(http.StatusOK, echo.Map{"message": "Staff deleted"})
+}
+
+// Captains List
+func (h *AdminHandler) GetAllCaptains(c echo.Context) error {
+	var captains []models.User
+	if err := database.GetDB().Where("role = ?", "captain").Find(&captains).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to fetch captains"})
+	}
+	return c.JSON(http.StatusOK, captains)
+}
+
+// Notifications
+
+// POST /admin/notifications
+func (h *AdminHandler) SendNotification(c echo.Context) error {
+	type NotificationRequest struct {
+		UserID  uint   `json:"user_id" form:"user_id"`
+		Message string `json:"message" form:"message"`
+	}
+	req := new(NotificationRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+
+	notification := models.Notification{
+		UserID:  req.UserID,
+		Message: req.Message,
+		IsRead:  false,
+	}
+
+	if err := database.GetDB().Create(&notification).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to send notification"})
+	}
+
+	return c.JSON(http.StatusCreated, notification)
+}

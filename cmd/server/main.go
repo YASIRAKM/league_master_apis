@@ -34,6 +34,7 @@ func main() {
 		&models.MatchEvent{},
 		&models.Standing{},
 		&models.Notification{},
+		&models.Staff{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database: ", err)
@@ -121,6 +122,26 @@ func main() {
 	admin.GET("/dashboard/stats", adminHandler.GetDashboardStats)
 	admin.POST("/users/:id/ban", adminHandler.BanUser)
 	admin.POST("/players/:id/ban", adminHandler.BanPlayer)
+
+	// Admin Players Extensions
+	admin.GET("/players", adminHandler.GetAllPlayers)
+	admin.POST("/players", adminHandler.CreatePlayer)
+	admin.GET("/players/:id", adminHandler.GetPlayer)
+	admin.PUT("/players/:id", adminHandler.UpdatePlayer)
+	admin.DELETE("/players/:id", adminHandler.DeletePlayer)
+
+	// Admin Staff
+	admin.GET("/staff", adminHandler.GetAllStaff)
+	admin.POST("/staff", adminHandler.CreateStaff)
+	admin.GET("/staff/:id", adminHandler.GetStaff)
+	admin.PUT("/staff/:id", adminHandler.UpdateStaff)
+	admin.DELETE("/staff/:id", adminHandler.DeleteStaff)
+
+	// Admin Captains
+	admin.GET("/captains", adminHandler.GetAllCaptains)
+
+	// Admin Notifications
+	admin.POST("/notifications", adminHandler.SendNotification)
 
 	// Start Server
 	// Start Server
